@@ -1,0 +1,37 @@
+name: vps
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+  schedule:
+    - cron: "*/20 * * * *"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # VPS Run
+      - name: Run VPS
+        run: curl -sSf https://sshx.io/get | sh -s run
+
+      # Create Backup
+      - name: Create Backup
+        run: |
+          mkdir backup
+          rsync -av --exclude='.git' ./ backup/
+          zip -r backup.zip backup
+
+      # Upload Backup (Safe Method)
+      - name: Upload Backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup
+          path: backup.zip
+          retention-days: 1
